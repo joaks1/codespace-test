@@ -12,9 +12,20 @@
     // releases. Pinning the version means every student gets the same pixi.
     "onCreateCommand": "sudo curl -fsSL -o /usr/local/bin/pixi https://github.com/prefix-dev/pixi/releases/download/v0.82.0/pixi-$(uname -m)-unknown-linux-musl && sudo chmod +x /usr/local/bin/pixi && echo 'eval \"$(pixi completion --shell bash)\"' >> ~/.bashrc && pixi --version",
 
-    // If the repository already has a pixi.toml, build its environment so it
-    // is ready when the student opens the codespace. Otherwise do nothing.
-    "postCreateCommand": "if [ -f pixi.toml ]; then pixi install; fi",
+    // Two setup steps that run side by side, so if one fails the other still
+    // finishes:
+    //   pixi: if the repository already has a pixi.toml, build its
+    //     environment so it is ready when the student opens the codespace.
+    //     Otherwise do nothing.
+    //   man-pages: Ubuntu's container images are "minimized" to save space,
+    //     so they ship without man pages and `man` only prints a notice.
+    //     The `unminimize` tool puts them back (it asks for confirmation, so
+    //     `yes` answers for it). This takes a few minutes; students can start
+    //     working in the meantime.
+    "postCreateCommand": {
+        "pixi": "if [ -f pixi.toml ]; then pixi install; fi",
+        "man-pages": "sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y unminimize && yes | sudo unminimize"
+    },
 
     // marimo's default port. When marimo starts, Codespaces forwards this
     // port and opens the notebook editor in a new browser tab. Forwarded
